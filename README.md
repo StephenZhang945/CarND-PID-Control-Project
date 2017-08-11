@@ -3,7 +3,7 @@ Self-Driving Car Engineer Nanodegree Program
 
 ---
 # Effects of PID components
-![alt text](pid.png "PID formula")
+![alt text](PID.png "PID formula")
 
 The formula above represents the generic representation of a PID controller for our project. CTE, is the 'Cross Track Error', the difference between the desired trajectory of the vehicle and our current position. The tau parameters are the hyperparameters to tune, in our project they are represented as Kp, Ki and Kd. 
 
