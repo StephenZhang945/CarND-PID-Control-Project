@@ -2,7 +2,82 @@
 Self-Driving Car Engineer Nanodegree Program
 
 ---
+# Effects of PID components
+![alt text](pid.png "PID formula")
 
+The formula above represents the generic representation of a PID controller for our project. CTE, is the 'Cross Track Error', the difference between the desired trajectory of the vehicle and our current position. The tau parameters are the hyperparameters to tune, in our project they are represented as Kp, Ki and Kd. 
+
+## P - Proportional
+Adjusting Kp (main.cpp:39, PID.cpp:16) controls the 'proportional' part of the controller. As the error gets larger this part will grow proportionally making the correctiong bigger too. 
+
+
+## I - Integral 
+Adjusting Ki we control the integral part of the PID controller. If there is any kind of constant bias in the system this part of the controller will compensate for it over time.
+
+## D - Differential
+In order to dampen the quick oscillations introduced by the P controller, the differential controller and its factor Kd, adjust the rate according to the derivate of the CTE or the 'speed' of change of CTE. Bigger quick drifts from CTE will yield a quicker correction.
+
+Here's a good graphic from [wikipedia](https://en.wikipedia.org/wiki/PID_controller) that shows the effects of modifying the parameters individually.
+
+![pidpars](PID_Compensation_Animated.gif)
+
+### PID in our project
+The behavior of modifying the parameters individually can be seen like in the discussion above with our vehicle. For example [Here's a video](p_only.mp4) of my project code running only with a 'proportional controller' in this case of value 0.1. It can be seen how the vehicle oscilates before settling into the final value. This is the expected behavior when using a P controller only 
+
+# Hyperpars optimization
+The following is a discussion about how the final parameters were chosing for this project.
+
+## Deciding against Twiddle/SGD
+While the twiddle algorithm seems well suited to find good matches for the project there are significant challenges for running it though. Namely:
+* The error to adjust every twiddle iteration requires a full lap of the track, and twiddle requires a significant number of iterations to converge losing practicality
+* The simulator process is **inherently unstable** and requires manual supervision all along. Given that any iteration of twiddle yield parameters that take the vehicle off track, process can't be easily automated for many iterations and has to be manually supervised.
+* A **real world** case for PID hyperpars tuning would present the same challenges making the case for scripting out hyperpars optimization for the sake of this project weaker.
+
+Because of this I chose to do manual tuning.
+
+## Manual tuning
+Given that the system has to be online when tuning parameters it does make sense to use manual tuning. For that end we followed the following algorithm for adjusting manually:
+
+1. Set Ki and Kd to 0
+2. Increase Kp until vehicle oscilates, then halve Kp.
+3. Increase Ki until any bias is removed
+4. Increase Kd until vehicle is reasonable quick to react to quick oscilations but without overshooting
+
+Also, here's compiled the effect of modifying every parameter independently:
+
+
+Parameter | Rise time | Overshoot | Settling time | Steady-state error | Stability
+---|---|---|---|---|---
+Kp | Decrease | Increase | Small change | Decrease | Degrade
+Ki | Decrease | Increase | Increase | Eliminate | Degrade
+Kd | Minor change | Decrease|Decrease| No effect | Improve if Kd small
+
+After following the above heuristic the following parameters were chosen for this project. Throttle setting = 0.6, this results in speed of approximately 60mph.
+
+* **Kp = 0.1**
+* **Ki = 0.00001**
+* **Kd = 6**
+
+[Here's a video](pid_video.mp4) of the track running with these parameters
+
+## Final Considerations
+* Once manual pars were chosen there seems to be opportunity for a modified Twiddle algorithm that can work online with minimal supervision. If we assume that the manually found parameters are close to a local minima in the parameter space, we could slowly modify Kp,Ki and Kd in the direction of the gradient. Because we start with a stable vehicle/track configuration we would likely not veer off track
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Project info
 ## Dependencies
 
 * cmake >= 3.5
